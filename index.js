@@ -211,19 +211,34 @@ function isGenerator(obj) {
  * @return {Boolean}
  * @api private
  */
+var isGeneratorFunction = (function () {
+  try {
+    /**
+     * Empty generator function for constructor comparison.
+     * Eval is used to avoid syntax errors.
+     */
+    var generator = eval('(function* () {})');
 
-function isGeneratorFunction(obj) {
-  return obj && obj.constructor == generator.constructor;
-}
+    /**
+     * If the runtime can handle `function*` syntax, a constructor
+     * comparison can be used to check if `obj` is a generator function.
+     */
+    return function isGeneratorFunction(obj) {
+      return obj.constructor == generator.constructor;
+    };
+  } catch (e) {
 
-/**
- * Empty generator function for constructor comparison.
- * This allows comparisons to work with ES6 transpilers.
- *
- * @api private
- */
-
-function* generator() {}
+    /**
+     * If `eval` fails, `function*` syntax is not supported,
+     * we fall back to a naive name checking.
+     */
+    return function isGeneratorFunction(obj) {
+      var constructor = obj.constructor;
+      var name = constructor.displayName || constructor.name;
+      return constructor && 'GeneratorFunction' == name;
+    };
+  }
+}());
 
 /**
  * Check for plain object.
